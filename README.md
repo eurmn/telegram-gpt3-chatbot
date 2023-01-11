@@ -1,6 +1,8 @@
 # GPT-3 Chatbot for Telegram
 A Telegram Chatbot powered by openAI's GPT-3 completion.
 
+![screenshot example](screenshot.png)
+
 ## Usage:
   - Clone the repo:
     ```bash

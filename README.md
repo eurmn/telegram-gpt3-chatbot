@@ -88,7 +88,7 @@ AI: [something]
 ```
 By doing so, the AI will believe it actually sent the `[something]` message.
 
-Most importantly, when `CONTINUOUS_CONVERSATION` is set to `true`, the bot stores **ALL** messages from **ALL** chats, this means private messages, groups and everything else. This is because the bot was not coded to be used by multiple different people, if you want to used it, you should host it yourself.
+Most importantly, when `CONTINUOUS_CONVERSATION` is set to `true`, the bot stores **ALL** messages from **ALL** chats, this means private messages, groups and everything else. This is because the bot was not coded to be used by multiple different people, if you want to use it, you should host it yourself.
 
 ## Todo:
  - [ ] Add whitelist/blacklist for chat IDs.

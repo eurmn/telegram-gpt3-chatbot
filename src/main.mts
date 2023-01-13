@@ -3,7 +3,6 @@ dotenv.config();
 
 import TelegramBot from 'node-telegram-bot-api';
 import fs from 'fs';
-import { AxiosError } from 'axios';
 import { Configuration, OpenAIApi } from 'openai';
 
 if (!process.env.TELEGRAM_BOT_API_KEY) {
@@ -19,11 +18,54 @@ function sleep(time: number) {
     return new Promise(resolve => setTimeout(resolve, time));
 }
 
-function buildLastMessage(last_user: string, last_input: string, last_answer: string) {
-    const botName = (userConfig.botName || PARAMETERS.BOT_NAME).replace('$username', last_user);
-    return `${last_user}: "${last_input}"\n${botName}: "${last_answer}"\n`;
+function buildLastMessage(lastUser: string, lastInput: string, lastAnswer: string) {
+    return formatVariables(`${lastUser}: ###${lastInput}###\n$name: ###${lastAnswer}###\n`);
 }
 
+function formatVariables(input: string, optionalParameters?: {
+    username?: string, command?: string
+}) {
+    return input.replace('$personality', userConfig.personality || PARAMETERS.PERSONALITY)
+        .replace('$name', userConfig.botName || PARAMETERS.BOT_NAME)
+        .replace('$username', optionalParameters?.username || 'username')
+        .replace('$command', optionalParameters?.command || 'command');
+}
+
+function removeCommandNameFromCommand(input: string) {
+    const ar = input.split(' ');
+    ar.shift();
+    return ar.join(' ');
+}
+
+function switchPersonality(personality: string) {
+    userConfig.personality = personality;
+    fs.writeFileSync('user-config.json', JSON.stringify(userConfig), 'utf8');
+}
+
+function switchBotName(name: string) {
+    userConfig.botName = name;
+    fs.writeFileSync('user-config.json', JSON.stringify(userConfig), 'utf8');
+}
+
+function switchLanguage(language: 'en' | 'pt' | string) {
+    userConfig.language = language;
+    fs.writeFileSync('user-config.json', JSON.stringify(userConfig), 'utf8');
+}
+
+function resetBotMemory() {
+    lastMessage = '';
+}
+
+async function generatePicture(input: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        openai.createImage({
+            prompt: input,
+            response_format: 'url'
+        }).then(data => {
+            resolve(data.data.data[0].url || '');
+        }).catch((e) => reject(e));
+    });
+}
 
 const token = process.env.TELEGRAM_BOT_API_KEY;
 const bot = new TelegramBot(token, { polling: true });
@@ -39,41 +81,110 @@ const PARAMETERS = {
     MODEL: process.env.MODEL || 'text-davinci-003',
     MAX_TOKENS: Number.parseFloat(process.env.MAX_TOKENS || '300'),
     TEMPERATURE: Number.parseFloat(process.env.TEMPERATURE || '0.5'),
-    PRESENCE_PENALTY: process.env.PRESENCE_PENALTY ? Number.parseFloat(process.env.PRESENCE_PENALTY) : undefined,
+    PRESENCE_PENALTY: process.env.PRESENCE_PENALTY ?
+        Number.parseFloat(process.env.PRESENCE_PENALTY) : undefined,
     FREQUENCY_PENALTY: Number.parseFloat(process.env.FREQUENCY_PENALTY || '1'),
-    CONTINUOUS_CONVERSATION: process.env.CONTINUOUS_CONVERSATION ? JSON.parse(process.env.CONTINUOUS_CONVERSATION) as boolean : false
+    CONTINUOUS_CONVERSATION: process.env.CONTINUOUS_CONVERSATION ?
+        JSON.parse(process.env.CONTINUOUS_CONVERSATION) as boolean : true,
+    LANGUAGE: process.env.LANGUAGE || 'en'
+};
+
+const MODEL_PRICES: {
+    [key:
+        'text-davinci-003' | 'text-curie-001' |
+        'text-babbage-001' | 'text-ada-001' |
+        'code-davinci-002' | 'code-cushman-001' | string
+    ]: number
+} = {
+    'text-davinci-003': .00002,
+    'text-curie-001': .000002,
+    'text-babbage-001': .0000005,
+    'text-ada-001': 0.0000004,
 };
 
 let lastMessage = '';
 
-const configJson: { personality: string, botName: string } = JSON.parse(fs.readFileSync('./user-config.json').toString());
-const userConfig = {
-    personality: configJson.personality,
-    botName: configJson.botName
-};
+let userConfig: { personality: string, botName: string, language: string } ;
+if (fs.existsSync('./user-config.json')) {
+    userConfig = JSON.parse(fs.readFileSync('./user-config.json').toString());
+} else {
+    userConfig = {
+        personality: '',
+        botName: '',
+        language: ''
+    };
+}
+
+const TRANSLATIONS: {
+    [key: 'en' | 'pt' | string]: {
+        general: {
+            'personality-switch': string,
+            'name-switch': string,
+            'default-start': string,
+            'default-personality': string,
+            'memory-reset': string,
+            'language-switch': string,
+        },
+        'command-descriptions': {
+            personality: string,
+            name: string,
+            reset: string,
+            imagine: string,
+            language: string
+        }
+        errors: {
+            'generic-error': string,
+            'image-safety': string,
+            'no-parameter-command': string,
+            'invalid-language': string
+        }
+    }
+} = JSON.parse(fs.readFileSync('./translations.json').toString());
 
 bot.setMyCommands([
-    { command: 'personality', description: 'Define a personalidade do BOT.' },
-    { command: 'name', description: 'Define o nome do BOT.' },
-    { command: 'picture', description: 'Gera uma imagem.' },
-    { command: 'reset', description: 'Reseta a memória do BOT.' },
+    {
+        command: 'personality',
+        description: TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE][
+            'command-descriptions'].personality
+    },
+    {
+        command: 'name',
+        description: TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE][
+            'command-descriptions'].name
+    },
+    {
+        command: 'imagine',
+        description: TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE][
+            'command-descriptions'].imagine
+    },
+    {
+        command: 'reset',
+        description: TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE][
+            'command-descriptions'].reset
+    },
+    {
+        command: 'language',
+        description: TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE][
+            'command-descriptions'].language
+    },
 ]);
 
+// Messages for conversations.
 bot.on('message', async (msg) => {
-    if (msg.text?.startsWith('/personality') || msg.text?.startsWith('/name') ||
-        msg.text?.startsWith('/imagine') || msg.text?.startsWith('/reset')) {
-        return;
+    for (const command of (await bot.getMyCommands())) {
+        if (msg.text?.startsWith('/' + command.command)) return;
     }
 
     if (msg.text && (msg.chat.type == 'private' || msg.text?.includes(`@${botUsername}`))) {
-        const text = msg.text?.replace(`@${botUsername} `, '').replace(`@${botUsername}`, '');
+        const text = msg.text?.replace('@' + botUsername + ' ', '')
+            .replace('@' + botUsername, '').replace('#', '\\#');
+        const username = msg.from?.username || 'user';
 
-        const suffix = PARAMETERS.INPUT_SUFFIX.replace('$username', msg.from?.username || 'user');
-        const promptStart = PARAMETERS.PROMPT_START.replace('$personality', userConfig.personality || PARAMETERS.PERSONALITY);
-        const botName = (userConfig.botName || PARAMETERS.BOT_NAME).replace('$username', msg.from?.username || 'username');
-        const prompt = `${promptStart}\n\n${lastMessage ? lastMessage : ''}${suffix}: "${text}"\n${botName}: "`;
-
-        console.log(prompt);
+        const suffix = formatVariables(PARAMETERS.INPUT_SUFFIX, { username });
+        const promptStart = formatVariables(PARAMETERS.PROMPT_START, { username });
+        const botName = formatVariables(userConfig.botName || PARAMETERS.BOT_NAME, { username });
+        const prompt = `${promptStart}\n\n${lastMessage ? lastMessage : ''}` +
+            `${suffix}: ###${text}###\n${botName}: ###`;
 
         let response: string;
         try {
@@ -82,7 +193,7 @@ bot.on('message', async (msg) => {
             (async () => {
                 while (!done) {
                     await bot.sendChatAction(msg.chat.id, 'typing');
-                    await sleep(5000);
+                    await sleep(3000);
                 }
             })();
 
@@ -93,68 +204,127 @@ bot.on('message', async (msg) => {
                 max_tokens: PARAMETERS.MAX_TOKENS,
                 frequency_penalty: PARAMETERS.FREQUENCY_PENALTY,
                 presence_penalty: PARAMETERS.PRESENCE_PENALTY,
-                stop: ['"'],
+                stop: ['###'],
             }));
             done = true;
 
-            let price: number;
-            switch (PARAMETERS.MODEL) {
-            case 'text-davinci-003':
-                price = 0.00002;
-                break;
-            case 'text-curie-001':
-                price = 0.000002;
-                break;
-            default:
-                price = 0;
-                break;
-            }
+            const price = MODEL_PRICES[PARAMETERS.MODEL] || 0;
 
             response = ai.data.choices[0].text || 'error';
 
             console.log(`\n${suffix}: "${text}"\n${botName}: "${response}"`);
-            console.log(`[usage: ${ai.data.usage?.total_tokens} tokens (R$${(ai.data.usage?.total_tokens || 0) * price * 5.17})]`);
-        } catch (e) {
-            if (e instanceof AxiosError) {
-                console.error(e.response?.status, e.code);
+            console.log(
+                `[usage: ${ai.data.usage?.total_tokens || -1} tokens ` +
+                `($${(ai.data.usage?.total_tokens || 0) * price})]`
+            );
+
+            if (PARAMETERS.CONTINUOUS_CONVERSATION) {
+                lastMessage += buildLastMessage(suffix, text, response) + '\n';
+                fs.appendFileSync(
+                    'history.jsonl',
+                    JSON.stringify({
+                        prompt: `${suffix}: ###${text}###\n${botName}: ###`,
+                        completion: response
+                    }) + '\n');
+            } else {
+                lastMessage = buildLastMessage(suffix, text, response);
             }
+
+            await bot.sendMessage(msg.chat.id, response, { reply_to_message_id: msg.message_id });
+        } catch (e) {
+            await bot.sendMessage(
+                msg.chat.id,
+                TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE].errors['generic-error'],
+                { reply_to_message_id: msg.message_id }
+            );
+            console.error(e);
             return;
         }
-
-        if (PARAMETERS.CONTINUOUS_CONVERSATION) {
-            lastMessage += buildLastMessage(suffix, text, response) + '\n';
-        } else {
-            lastMessage = buildLastMessage(suffix, text, response);
-        }
-
-        await bot.sendMessage(msg.chat.id, response, { reply_to_message_id: msg.message_id });
     }
 });
 
-bot.onText(/\/personality (.+)/, (msg, _match) => {
-    userConfig.personality = msg.text?.replace('/personality ', '') || '';
-    fs.writeFileSync('user-config.json', JSON.stringify(userConfig), 'utf8');
-    bot.sendMessage(msg.chat.id, `Agora sou "${userConfig.personality}"`, { reply_to_message_id: msg.message_id });
-});
+// Command handlers.
+bot.onText(/\w+(@\w+)?(?:\s.*)?/ , async (msg, match) => {
+    if (!match) return;
 
-bot.onText(/\/name (.+)/, (msg, _match) => {
-    userConfig.botName = msg.text?.replace('/name ', '') || '';
-    fs.writeFileSync('user-config.json', JSON.stringify(userConfig), 'utf8');
-    bot.sendMessage(msg.chat.id, `Agora me chamo "${userConfig.botName}"`, { reply_to_message_id: msg.message_id });
-});
+    let command: string | undefined;
+    
+    if (match[0].split(' ').length != 1) {
+        command = match[0].split(' ').shift();
+    } else {
+        command = match[0];
+        if (command != 'reset') {
+            await bot.sendMessage(
+                msg.chat.id,
+                formatVariables(
+                    TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE]
+                        .errors['no-parameter-command'],
+                    { command }
+                ),
+                { reply_to_message_id: msg.message_id }
+            );
+            return;
+        }
+    }
 
-bot.onText(/\/reset/, (msg, _match) => {
-    lastMessage = '';
-    bot.sendMessage(msg.chat.id, 'Esqueci de tudo.', { reply_to_message_id: msg.message_id });
-});
+    if (command?.endsWith('@' + botUsername)) {
+        command = command.replace('@' + botUsername, '');
+    } else if (msg.chat.type != 'private') {
+        return;
+    }
 
-bot.onText(/\/imagine (.+)/, async (msg, match) => {
-    const theme = msg.text?.replace('/imagine ', '') || '';
-    let img: string;
+    const input = removeCommandNameFromCommand(match[0]);
 
-    try {
-        let done = false;
+    let done = false;
+    switch (command) {
+    case 'personality':
+        switchPersonality(input);
+        await bot.sendMessage(
+            msg.chat.id,
+            formatVariables(
+                TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE]
+                    .general['personality-switch']
+            ),
+            { reply_to_message_id: msg.message_id }
+        );
+        break;
+    case 'name':
+        switchBotName(input);
+        await bot.sendMessage(
+            msg.chat.id,
+            formatVariables(
+                TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE].general['name-switch']
+            ),
+            { reply_to_message_id: msg.message_id }
+        );
+        break;
+    case 'reset':
+        resetBotMemory();
+        await bot.sendMessage(
+            msg.chat.id,
+            TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE].general['memory-reset'],
+            { reply_to_message_id: msg.message_id }
+        );
+        break;
+    case 'language':
+        if (Object.keys(TRANSLATIONS).includes(input)) {
+            switchLanguage(input);
+            await bot.sendMessage(
+                msg.chat.id,
+                TRANSLATIONS[input].general['language-switch'],
+                { reply_to_message_id: msg.message_id }
+            );
+            break;
+        }
 
+        await bot.sendMessage(
+            msg.chat.id,
+            TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE]
+                .errors['invalid-language'].replace('$language', input),
+            { reply_to_message_id: msg.message_id }
+        );
+        break;
+    case 'imagine':
         (async () => {
             while (!done) {
                 await bot.sendChatAction(msg.chat.id, 'upload_photo');
@@ -162,16 +332,34 @@ bot.onText(/\/imagine (.+)/, async (msg, match) => {
             }
         })();
 
-        img = (await openai.createImage({
-            prompt: theme,
-            response_format: 'url'
-        })).data.data[0].url || '';
-        done = true;
-
-        bot.sendPhoto(msg.chat.id, img, { reply_to_message_id: msg.message_id });
-    } catch (e) {
-        bot.sendMessage(msg.chat.id, 'Sua imagem não pode ser feita pois viola o sistema de segurança.', { reply_to_message_id: msg.message_id });
+        try {
+            const imageUrl = await generatePicture(input);
+            await bot.sendPhoto(msg.chat.id, imageUrl, { reply_to_message_id: msg.message_id });
+            done = true;
+        } catch (e) {
+            await bot.sendMessage(
+                msg.chat.id,
+                TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE].errors['image-safety'],
+                { reply_to_message_id: msg.message_id}
+            );
+            done = true;
+        }
+        break;
+    default:
+        break;
     }
 });
 
 console.log('Bot Started!');
+
+process.on('SIGINT', () => {
+    console.log('\nExiting...');
+    bot.stopPolling();
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('\nExiting...');
+    bot.stopPolling();
+    process.exit(0);
+});

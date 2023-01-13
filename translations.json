@@ -1,0 +1,48 @@
+{
+    "en": {
+        "general": {
+            "personality-switch": "now i am \"$personality\".",
+            "name-switch": "Now I'm called \"$name\".",
+            "default-start": "Conversation with $personality.",
+            "default-personality": "an AI",
+            "memory-reset": "I just forgot everything.",
+            "language-switch": "Language is now english."
+        },
+        "command-descriptions": {
+            "personality": "Sets the AI's personality.",
+            "name": "Sets the AI's name.",
+            "reset": "Make the AI forget the past messages.",
+            "imagine": "Generate a 512x512 image.",
+            "language": "Changes the bot's language."
+        },
+        "errors": {
+            "generic-error": "An error occured :(",
+            "image-safety": "Your image could not be made because it violates the safety regulations.",
+            "no-parameter-command": "Please provide a parameter for the /$command command.",
+            "invalid-language": "\"$language\" is not a valid language."
+        }
+    },
+    "pt": {
+        "general": {
+            "personality-switch": "Agora sou \"$personality\".",
+            "name-switch": "Agora me chamo \"$name\".",
+            "default-start": "Conversa com $personality.",
+            "default-personality": "uma IA.",
+            "memory-reset": "Esqueci de tudo.",
+            "language-switch": "Idioma mudado para português."
+        },
+        "command-descriptions": {
+            "personality": "Define a personalidade da IA.",
+            "name": "Define o nome da IA.",
+            "reset": "Faz a IA esquecer das mensagens anteriores.",
+            "imagine": "Gera uma imagem 512x512.",
+            "language": "Muda o idioma do bot."
+        },
+        "errors": {
+            "generic-error": "Ocorreu um erro :(",
+            "image-safety": "Sua imagem não pôde ser gerada pois viola as regulações de segurança.",
+            "no-parameter-command": "Por favor envie um parâmetro junto do comando /$command.",
+            "invalid-language": "\"$language\" não é um idioma válido."
+        }
+    }
+}

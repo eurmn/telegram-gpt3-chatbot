@@ -219,8 +219,8 @@ bot.on('message', async (msg) => {
         const suffix = formatVariables(PARAMETERS.INPUT_SUFFIX, { username });
         const promptStart = formatVariables(PARAMETERS.PROMPT_START, { username });
         const botName = formatVariables(userConfig.botName || PARAMETERS.BOT_NAME, { username });
-        const prompt = `${promptStart}\n\n${lastMessage ? lastMessage : ''}` +
-            `${suffix}: ###${text}###\n${botName}: ###`;
+        const prompt = promptStart + 'The bot uses markdown.\n\n' +
+            lastMessage ? lastMessage : '' + suffix + `: ###${text}###\n${botName}: ###`;
 
         let response: string;
         try {
@@ -266,7 +266,10 @@ bot.on('message', async (msg) => {
                 lastMessage = buildLastMessage(suffix, text, response);
             }
 
-            await bot.sendMessage(msg.chat.id, response, { reply_to_message_id: msg.message_id });
+            await bot.sendMessage(msg.chat.id, response, {
+                reply_to_message_id: msg.message_id,
+                parse_mode: 'MarkdownV2'
+            });
         } catch (e) {
             await bot.sendMessage(
                 msg.chat.id,

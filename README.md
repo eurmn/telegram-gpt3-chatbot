@@ -29,7 +29,7 @@ This bot can very easily replicate similar results to ChatGPT by settings its pe
 
 You can achieve similar results regarding the markdown by appending something like `The AI uses markdown` to AI's personality.
 
-Also, although
+Also, although `text-davinci-003` is not meant to be used for coding, it has a pretty good understanding of coding. If you want to use the bot exclusively for coding, consider using the `code-davinci-002` model, just be aware that it seems to be pretty bad at regular human conversations.
 
 Here's a small comparison with ChatGPT:
  - Prompt: "Hi".

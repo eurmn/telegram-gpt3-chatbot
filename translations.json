@@ -1,7 +1,7 @@
 {
     "en": {
         "general": {
-            "personality-switch": "now i am \"$personality\".",
+            "personality-switch": "Now I am \"$personality\".",
             "name-switch": "Now I'm called \"$name\".",
             "default-start": "Conversation with $personality.",
             "default-personality": "an AI",

@@ -279,17 +279,16 @@ bot.on('message', async (msg) => {
     }
 });
 
-// Command handlers.
-bot.onText(/\w+(@\w+)?(?:\s.*)?/ , async (msg, match) => {
+bot.onText(/\/(\w+)(@\w+)?(?:\s.*)?/ , async (msg, match) => {    
     if (!match) return;
 
     let command: string | undefined;
-    
+
     if (match[0].split(' ').length != 1) {
         command = match[0].split(' ').shift();
     } else {
         command = match[0];
-        if (command != 'reset') {
+        if (!command.startsWith('/reset')) {
             await bot.sendMessage(
                 msg.chat.id,
                 formatVariables(
@@ -309,11 +308,12 @@ bot.onText(/\w+(@\w+)?(?:\s.*)?/ , async (msg, match) => {
         return;
     }
 
+
     const input = removeCommandNameFromCommand(match[0]);
 
     let done = false;
     switch (command) {
-    case 'personality':
+    case '/personality':
         switchPersonality(input);
         await bot.sendMessage(
             msg.chat.id,
@@ -324,7 +324,7 @@ bot.onText(/\w+(@\w+)?(?:\s.*)?/ , async (msg, match) => {
             { reply_to_message_id: msg.message_id }
         );
         break;
-    case 'name':
+    case '/name':
         switchBotName(input);
         await bot.sendMessage(
             msg.chat.id,
@@ -334,7 +334,7 @@ bot.onText(/\w+(@\w+)?(?:\s.*)?/ , async (msg, match) => {
             { reply_to_message_id: msg.message_id }
         );
         break;
-    case 'reset':
+    case '/reset':
         resetBotMemory();
         await bot.sendMessage(
             msg.chat.id,
@@ -342,7 +342,7 @@ bot.onText(/\w+(@\w+)?(?:\s.*)?/ , async (msg, match) => {
             { reply_to_message_id: msg.message_id }
         );
         break;
-    case 'language':
+    case '/language':
         if (Object.keys(TRANSLATIONS).includes(input)) {
             switchLanguage(input);
             await bot.sendMessage(
@@ -360,7 +360,7 @@ bot.onText(/\w+(@\w+)?(?:\s.*)?/ , async (msg, match) => {
             { reply_to_message_id: msg.message_id }
         );
         break;
-    case 'imagine':
+    case '/imagine':
         (async () => {
             while (!done) {
                 await bot.sendChatAction(msg.chat.id, 'upload_photo');

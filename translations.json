@@ -18,7 +18,7 @@
         "errors": {
             "generic-error": "An error occured :(",
             "image-safety": "Your image could not be made because it violates the safety regulations.",
-            "no-parameter-command": "Please provide a parameter for the /$command command.",
+            "no-parameter-command": "Please provide a parameter for the $command command.",
             "invalid-language": "\"$language\" is not a valid language."
         }
     },
@@ -41,7 +41,7 @@
         "errors": {
             "generic-error": "Ocorreu um erro :(",
             "image-safety": "Sua imagem não pôde ser gerada pois viola as regulações de segurança.",
-            "no-parameter-command": "Por favor envie um parâmetro junto do comando /$command.",
+            "no-parameter-command": "Por favor envie um parâmetro junto do comando $command.",
             "invalid-language": "\"$language\" não é um idioma válido."
         }
     }

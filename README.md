@@ -20,6 +20,6 @@ A Telegram Chatbot powered by OpenAI's GPT-3 completion.
 ## Configuration and Tips:
 User configuration is stored at the .env file. The project comes with a default .env.example file explaining what each variable does.
 
-The `name` and `personality` variables have a priority for values defined by the user using the `/name` and `/personality` commands.
+The `name`, `language` and `personality` variables have a priority for values defined by the user using the `/name`, `/language` and `/personality` commands.
 
-The script automatically creates a `history.jsonl` file with all the prompts and completions. This file can be used later to [fine-tune the model](https://beta.openai.com/docs/guides/fine-tuning).
+The script automatically creates a `history.jsonl` file with all the prompts and completions. This file can be later used to [fine-tune the model](https://beta.openai.com/docs/guides/fine-tuning).

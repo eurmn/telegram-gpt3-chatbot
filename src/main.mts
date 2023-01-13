@@ -13,49 +13,85 @@ if (!process.env.TELEGRAM_BOT_API_KEY) {
     process.exit();
 }
 
-
-function sleep(time: number) {
+/** A simple async sleep function.
+ * @example
+ * await sleep(2000);
+ * console.log('Two seconds have passed.');
+ */
+function sleep(time: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, time));
 }
 
-function buildLastMessage(lastUser: string, lastInput: string, lastAnswer: string) {
+/** Formats the data about a message to be used later as a history for the AI in case
+ * CONTINUOUS_CONVERSATION is `true`.
+ * @param {string} lastUser - The username.
+ * @param {string} lastInput - The message.
+ * @param {string} lastAnswer - The AI's completion.
+ * @returns {string} The formatted message.
+ */
+function buildLastMessage(lastUser: string, lastInput: string, lastAnswer: string): string {
     return formatVariables(`${lastUser}: ###${lastInput}###\n$name: ###${lastAnswer}###\n`);
 }
 
+/** Replace `$placeholders` for the actual values of the variables.
+ * @example formatVariables("Hello, $username.", { username: "john" }) // "Hello, john."
+ * @param {string} input - The unformatted string.
+ * @param {{ username?: string, command?: string }} optionalParameters -
+ * The `username` or the `command` variables.
+ * @returns {string} The formatted string.
+ */
 function formatVariables(input: string, optionalParameters?: {
     username?: string, command?: string
-}) {
+}): string {
     return input.replace('$personality', userConfig.personality || PARAMETERS.PERSONALITY)
         .replace('$name', userConfig.botName || PARAMETERS.BOT_NAME)
         .replace('$username', optionalParameters?.username || 'username')
         .replace('$command', optionalParameters?.command || 'command');
 }
 
-function removeCommandNameFromCommand(input: string) {
+/** Removes the name of the command from the command's message.
+ * @param {string} input - The raw message.
+ * @returns {string} The message without the `/command`.
+*/
+function removeCommandNameFromCommand(input: string): string {
     const ar = input.split(' ');
     ar.shift();
     return ar.join(' ');
 }
 
+/** Switches the bot's personality sent at the beggining of the prompt for OpenAI's completion.
+ * @param {string} personality - The bot's new personality.
+*/
 function switchPersonality(personality: string) {
     userConfig.personality = personality;
     fs.writeFileSync('user-config.json', JSON.stringify(userConfig), 'utf8');
 }
 
+/** Switches the bot's name sent to OpenAI for completion.
+ * @param {string} name - The bot's new name.
+ */
 function switchBotName(name: string) {
     userConfig.botName = name;
     fs.writeFileSync('user-config.json', JSON.stringify(userConfig), 'utf8');
 }
 
+/** Switches bot's language for pre-generated messages
+ * @param {'en' | 'pt' | string} language - The language the bot will now speak.
+ */
 function switchLanguage(language: 'en' | 'pt' | string) {
     userConfig.language = language;
     fs.writeFileSync('user-config.json', JSON.stringify(userConfig), 'utf8');
 }
 
+/** Resets the bot's memory about previous messages. */
 function resetBotMemory() {
     lastMessage = '';
 }
 
+/** Generates a picture using DALL·E 2.
+ * @param {string} input - The prompt for the picture.
+ * @returns {Promise<string>} The URL of the generated image.
+*/
 async function generatePicture(input: string): Promise<string> {
     return new Promise((resolve, reject) => {
         openai.createImage({

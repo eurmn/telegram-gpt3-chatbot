@@ -1,7 +1,7 @@
 {
     "en": {
         "general": {
-            "start-message": "Hi! This is a pre-generated message. You can choose my personality and name with the /personality and /name commands.\nYour next messages (besides commands) will be all responded by an AI.\nIf the CONTINUOUS_CONVERSATION variable is set to true, you might want to send me the /reset command once in a while to reset my memory and consume less API tokens.\nYou might change the language with the /language command (currently only english [en] and portuguese [pt] are available). Have fun!",
+            "start-message": "Hi! This is a pre-generated message.\n\nYou can choose my personality and name with the /personality and /name commands.\n\nYour next messages (besides commands) will be all responded by an AI.\n\nIf the CONTINUOUS_CONVERSATION variable is set to true, you might want to send me the /reset command once in a while to reset my memory and consume less API tokens.\n\nYou might change the language with the /language command (currently only english [en] and portuguese [pt] are available). \n\nHave fun!",
             "personality-switch": "Now I am \"$personality\".",
             "name-switch": "Now I'm called \"$name\".",
             "default-start": "Conversation with $personality.",
@@ -14,7 +14,8 @@
             "name": "Sets the AI's name.",
             "reset": "Make the AI forget the past messages.",
             "imagine": "Generate a 512x512 image.",
-            "language": "Changes the bot's language."
+            "language": "Changes the bot's language.",
+            "start": "Starts the conversation."
         },
         "errors": {
             "generic-error": "An error occured :(",
@@ -25,7 +26,7 @@
     },
     "pt": {
         "general": {
-            "start-message": "Olá! Este é uma mensagem pré-gerada\n. Você pode escolher minha personalidade e meu nome com os comandos /personality e /name.\nSuas próximas mensagens (além dos comandos) serão todas respondidas por um IA.\nSe a variável CONTINUOUS_CONVERSATION estiver definida como true, considere enviar o comando /reset de vez em quando para resetar minha memória e consumir menos tokens da API.\nVocê também pode alterar o idioma usando o comando /language (atualmente só inglês [en] e português [pt] estão disponíveis). Divirta-se!",
+            "start-message": "Olá! Este é uma mensagem pré-gerada.\n\nVocê pode escolher minha personalidade e meu nome com os comandos /personality e /name.\n\nSuas próximas mensagens (além dos comandos) serão todas respondidas por um IA.\n\nSe a variável CONTINUOUS_CONVERSATION estiver definida como true, considere enviar o comando /reset de vez em quando para resetar minha memória e consumir menos tokens da API.\n\nVocê também pode alterar o idioma usando o comando /language (atualmente só inglês [en] e português [pt] estão disponíveis).\n\nDivirta-se!",
             "personality-switch": "Agora sou \"$personality\".",
             "name-switch": "Agora me chamo \"$name\".",
             "default-start": "Conversa com $personality.",
@@ -38,7 +39,8 @@
             "name": "Define o nome da IA.",
             "reset": "Faz a IA esquecer das mensagens anteriores.",
             "imagine": "Gera uma imagem 512x512.",
-            "language": "Muda o idioma do bot."
+            "language": "Muda o idioma do bot.",
+            "start": "Inicia a conversa."
         },
         "errors": {
             "generic-error": "Ocorreu um erro :(",

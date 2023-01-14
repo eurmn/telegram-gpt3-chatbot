@@ -179,7 +179,8 @@ const TRANSLATIONS: {
             name: string,
             reset: string,
             imagine: string,
-            language: string
+            language: string,
+            start: string
         }
         errors: {
             'generic-error': string,
@@ -191,6 +192,11 @@ const TRANSLATIONS: {
 } = JSON.parse(fs.readFileSync('./translations.json').toString());
 
 bot.setMyCommands([
+    {
+        command: 'start',
+        description: TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE][
+            'command-descriptions'].start
+    },
     {
         command: 'personality',
         description: TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE][

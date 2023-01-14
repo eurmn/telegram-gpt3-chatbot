@@ -22,6 +22,18 @@ function sleep(time: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, time));
 }
 
+/** Escapes a string for it to be used in a markdown message.
+ * @param {string} input - The input message.
+ * @returns {string} The escaped message.
+ */
+function escapeForMarkdown(input: string): string {
+    return input.replace('_', '\\_')
+        .replace('*', '\\*')
+        .replace('[', '\\[')
+        .replace('`', '\\`')
+        .replace('.', '\\.');
+}
+
 /** Formats the data about a message to be used later as a history for the AI in case
  * CONTINUOUS_CONVERSATION is `true`.
  * @param {string} lastUser - The username.
@@ -160,6 +172,7 @@ const TRANSLATIONS: {
             'default-personality': string,
             'memory-reset': string,
             'language-switch': string,
+            'start-message': string
         },
         'command-descriptions': {
             personality: string,
@@ -219,7 +232,7 @@ bot.on('message', async (msg) => {
         const suffix = formatVariables(PARAMETERS.INPUT_SUFFIX, { username });
         const promptStart = formatVariables(PARAMETERS.PROMPT_START, { username });
         const botName = formatVariables(userConfig.botName || PARAMETERS.BOT_NAME, { username });
-        const prompt = promptStart + '\n\n' + lastMessage ? lastMessage : '' +
+        const prompt = promptStart + '\n\n' + (lastMessage ? lastMessage : '') +
             suffix + ': ###' + text + '###\n' + botName + ': ###';
 
         let response: string;
@@ -268,7 +281,6 @@ bot.on('message', async (msg) => {
 
             await bot.sendMessage(msg.chat.id, response, {
                 reply_to_message_id: msg.message_id,
-                parse_mode: 'MarkdownV2'
             });
         } catch (e) {
             await bot.sendMessage(
@@ -282,16 +294,16 @@ bot.on('message', async (msg) => {
     }
 });
 
-bot.onText(/\/(\w+)(@\w+)?(?:\s.*)?/ , async (msg, match) => {    
+bot.onText(/^\/(\w+)(@\w+)?(?:\s.\*)?/ , async (msg, match) => {
     if (!match) return;
 
     let command: string | undefined;
 
-    if (match[0].split(' ').length != 1) {
-        command = match[0].split(' ').shift();
+    if (match.input.split(' ').length != 1) {
+        command = match.input.split(' ').shift();
     } else {
-        command = match[0];
-        if (!command.startsWith('/reset')) {
+        command = match.input;
+        if (!(command.startsWith('/reset') || command.startsWith('/start'))) {
             await bot.sendMessage(
                 msg.chat.id,
                 formatVariables(
@@ -311,11 +323,20 @@ bot.onText(/\/(\w+)(@\w+)?(?:\s.*)?/ , async (msg, match) => {
         return;
     }
 
-
-    const input = removeCommandNameFromCommand(match[0]);
+    const input = removeCommandNameFromCommand(match.input);
 
     let done = false;
     switch (command) {
+    case '/start':
+        await bot.sendMessage(
+            msg.chat.id,
+            formatVariables(
+                TRANSLATIONS[userConfig.language || PARAMETERS.LANGUAGE]
+                    .general['start-message']
+            ),
+            { reply_to_message_id: msg.message_id }
+        );
+        break;
     case '/personality':
         switchPersonality(input);
         await bot.sendMessage(

@@ -1,6 +1,7 @@
 {
     "en": {
         "general": {
+            "start-message": "Hi! This is a pre-generated message. You can choose my personality and name with the /personality and /name commands.\nYour next messages (besides commands) will be all responded by an AI.\nIf the CONTINUOUS_CONVERSATION variable is set to true, you might want to send me the /reset command once in a while to reset my memory and consume less API tokens.\nYou might change the language with the /language command (currently only english [en] and portuguese [pt] are available). Have fun!",
             "personality-switch": "Now I am \"$personality\".",
             "name-switch": "Now I'm called \"$name\".",
             "default-start": "Conversation with $personality.",
@@ -24,6 +25,7 @@
     },
     "pt": {
         "general": {
+            "start-message": "Olá! Este é uma mensagem pré-gerada\n. Você pode escolher minha personalidade e meu nome com os comandos /personality e /name.\nSuas próximas mensagens (além dos comandos) serão todas respondidas por um IA.\nSe a variável CONTINUOUS_CONVERSATION estiver definida como true, considere enviar o comando /reset de vez em quando para resetar minha memória e consumir menos tokens da API.\nVocê também pode alterar o idioma usando o comando /language (atualmente só inglês [en] e português [pt] estão disponíveis). Divirta-se!",
             "personality-switch": "Agora sou \"$personality\".",
             "name-switch": "Agora me chamo \"$name\".",
             "default-start": "Conversa com $personality.",

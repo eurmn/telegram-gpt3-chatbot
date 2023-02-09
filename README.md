@@ -1,6 +1,8 @@
 # GPT-3 Chatbot for Telegram
 A Telegram Chatbot powered by OpenAI's GPT-3 completion.
 
+## OBS: ChatGPT has its own API now, making this bot partially obsolete (it still works as intended, but there are better ways to implement it).
+
 ![screenshot example](screenshot.png)
 
 ## Usage:
